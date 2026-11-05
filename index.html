@@ -1,0 +1,554 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>hPa en pieds</title>
+<meta name="theme-color" content="#0d1526">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="hPa en pieds">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}[hidden]{display:none!important}</style>
+<style>
+/* Layout: an altimeter read-out on top, the sounding's pressure levels as a ladder beside it.
+   Type: system faces only, so the installed version needs no network at all. */
+:root {
+  --bg: #0d1526; --surface: #1e2d4a; --ink: #ffffff; --muted: #a0b0c8; --line: rgba(160, 176, 200, .24);
+  --accent: #f5a623; --accent-text: #f5a623; --on-accent: #1a1204; --hi: rgba(245, 166, 35, .18);
+  --green: #2ecc71; --on-green: #06210f;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --num: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Roboto Mono", monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font: 16px/1.45 var(--sans); }
+.wrap {
+  max-width: 980px; margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 18px 40px;
+  display: grid; gap: 20px; grid-template-columns: minmax(0, 1fr);
+}
+@media (min-width: 820px) {
+  .wrap { grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); align-items: start; }
+  header, .full { grid-column: 1 / -1; }
+}
+header { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: baseline; justify-content: space-between; }
+h1 { margin: 0; font: 700 1.5rem/1.1 var(--num); letter-spacing: -.02em; text-wrap: balance; }
+h2 { margin: 0; font-size: .75rem; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; color: var(--muted); }
+#net { font-size: .8125rem; color: var(--muted); }
+.col { display: grid; gap: 20px; min-width: 0; }
+section { display: grid; gap: 10px; min-width: 0; }
+
+.readout { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 16px; display: grid; gap: 12px; }
+.big { font: 700 clamp(2.6rem, 13vw, 3.8rem)/1 var(--num); letter-spacing: -.04em; font-variant-numeric: tabular-nums; color: var(--accent-text); }
+.big small { font-size: .38em; letter-spacing: 0; color: var(--muted); font-weight: 600; margin-left: .2em; }
+.biglabel { font-size: .875rem; color: var(--muted); margin-bottom: 6px; }
+.facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 16px; margin: 0; border-top: 1px solid var(--line); padding-top: 12px; }
+.facts div { min-width: 0; }
+.facts dt { font-size: .8125rem; color: var(--muted); }
+.facts dd { margin: 0; font: 600 1.05rem var(--num); font-variant-numeric: tabular-nums; }
+
+.fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+label { display: grid; gap: 4px; font-size: .875rem; font-weight: 600; min-width: 0; }
+label span { font-weight: 400; color: var(--muted); font-size: .8125rem; }
+.input { display: flex; align-items: stretch; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; min-width: 0; }
+.input:focus-within { outline: 2px solid var(--accent); outline-offset: 1px; }
+.input input { flex: 1; min-width: 0; width: 100%; border: 0; background: transparent; color: var(--ink); font: 600 1.25rem var(--num); padding: 10px 4px 10px 10px; outline: none; }
+.input i { font: 400 .8125rem var(--num); color: var(--muted); align-self: center; padding-right: 10px; }
+.input button { border: 0; border-left: 1px solid var(--line); background: transparent; color: var(--ink); font: 600 1.05rem var(--num); padding: 0 12px; cursor: pointer; border-radius: 0 5px 5px 0; }
+input[aria-invalid="true"] { color: var(--accent-text); }
+.row { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; justify-content: space-between; }
+#msg { font-size: .875rem; color: var(--muted); min-width: 0; flex: 1 1 200px; }
+#msg.err { color: var(--accent-text); font-weight: 600; }
+.btn { background: transparent; color: var(--ink); border: 1px solid var(--line); border-radius: 6px; font: 600 .875rem var(--sans); padding: 8px 12px; cursor: pointer; }
+.btn:focus-visible, .input button:focus-visible, td button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.tablebox { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+th { text-align: right; font-size: .8125rem; font-weight: 600; color: var(--muted); padding: 4px 8px; border-bottom: 1px solid var(--line); }
+th:first-child, td:first-child { text-align: left; }
+td { text-align: right; font-family: var(--num); padding: 0 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+td button { all: unset; cursor: pointer; display: block; padding: 8px 0; font-weight: 700; min-width: 4em; color: var(--ink); }
+tr.on td { background: var(--hi); }
+td.below { color: var(--muted); font-family: var(--sans); font-size: .8125rem; }
+.note { font-size: .8125rem; color: var(--muted); margin: 0; }
+
+#update { grid-column: 1 / -1; width: 100%; border: 0; border-radius: 6px; background: var(--green); color: var(--on-green); font: 700 .9375rem var(--sans); padding: 10px 12px; cursor: pointer; }
+
+.formula { display: grid; gap: 8px; }
+.formula code { display: block; font: .875rem/1.5 var(--num); white-space: pre-wrap; overflow-wrap: anywhere; padding: 8px 10px; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; }
+.formula p { margin: 0; font-size: .875rem; max-width: 65ch; }
+
+.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); }
+.tab { background: transparent; border: 0; border-bottom: 3px solid transparent; margin-bottom: -1px; color: var(--muted); font: 600 1rem var(--sans); padding: 8px 12px; cursor: pointer; }
+.tab[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); }
+.tab:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+#tab-calc { display: contents; }
+#tab-sondage { display: grid; gap: 20px; grid-template-columns: minmax(0, 1fr); min-width: 0; }
+@media (min-width: 820px) { #tab-sondage { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; } #tab-sondage > .wide { grid-column: 1 / -1; } }
+.verdicts { display: grid; gap: 12px; }
+.verdict { display: grid; gap: 2px; padding-top: 12px; border-top: 1px solid var(--line); }
+.verdict:first-child { padding-top: 0; border-top: 0; }
+.vhead { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: center; justify-content: space-between; }
+.vname { font-size: .875rem; color: var(--muted); }
+.state { font-size: .8125rem; font-weight: 700; padding: 2px 8px; border-radius: 4px; border: 1px solid var(--line); color: var(--muted); }
+.state.alert { color: var(--accent-text); border-color: var(--accent); }
+.vvalue { font: 700 1.5rem/1.2 var(--num); font-variant-numeric: tabular-nums; }
+.vtext { font-size: .875rem; margin: 0; }
+#exnote { display: grid; gap: 8px; }
+#exnote p, #exnote ul { margin: 0; font-size: .9375rem; max-width: 70ch; }
+#exnote ul { padding-left: 1.2em; display: grid; gap: 6px; }
+.terms { margin: 0; display: grid; gap: 0; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 820px) { .terms { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 28px; } }
+.terms > div { padding: 10px 0; border-bottom: 1px solid var(--line); min-width: 0; }
+.terms dt { font-weight: 700; font-family: var(--num); }
+.terms dt span { font-family: var(--sans); font-weight: 400; color: var(--muted); font-size: .875rem; margin-left: 4px; }
+.terms dd { margin: 3px 0 0; font-size: .9375rem; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <button id="update" type="button" hidden>Nouvelle version disponible : touche pour mettre à jour</button>
+  <header>
+    <h1>hPa en pieds</h1>
+    <div id="net"></div>
+  </header>
+
+  <nav class="tabs full" role="tablist" aria-label="Sections">
+    <button class="tab" type="button" role="tab" id="btn-calc" aria-controls="tab-calc" data-tab="calc">Calcul</button>
+    <button class="tab" type="button" role="tab" id="btn-sondage" aria-controls="tab-sondage" data-tab="sondage">Sondage</button>
+  </nav>
+
+  <div id="tab-calc" role="tabpanel" aria-labelledby="btn-calc">
+  <div class="col">
+    <section class="readout" aria-live="polite">
+      <div>
+        <div class="biglabel" id="biglabel">Altitude</div>
+        <div class="big" id="big">–</div>
+      </div>
+      <dl class="facts">
+        <div><dt>Au-dessus du terrain</dt><dd id="agl">–</dd></div>
+        <div><dt>En mètres</dt><dd id="metres">–</dd></div>
+        <div><dt>Atmosphère standard</dt><dd id="std">–</dd></div>
+        <div><dt>Pression du jour</dt><dd id="dq">–</dd></div>
+        <div><dt>Température</dt><dd id="dt">–</dd></div>
+        <div><dt>Écart à la standard</dt><dd id="isa">–</dd></div>
+      </dl>
+    </section>
+
+    <section>
+      <form class="fields" id="form" autocomplete="off">
+        <label>Pression lue
+          <span class="input"><input id="p" inputmode="decimal" aria-describedby="msg"><i>hPa</i></span>
+          <span>Obligatoire</span>
+        </label>
+        <label>QNH du jour
+          <span class="input"><input id="q" inputmode="decimal"><i>hPa</i></span>
+          <span>Vide : 1013,25</span>
+        </label>
+        <label>Altitude du terrain
+          <span class="input"><input id="e" inputmode="decimal"><i>ft</i></span>
+          <span>Pour la hauteur sol</span>
+        </label>
+        <label>Température au niveau
+          <span class="input"><input id="t" inputmode="decimal"><i>°C</i><button type="button" id="sign" aria-label="Changer le signe de la température">±</button></span>
+          <span>Vide : pas de correction</span>
+        </label>
+      </form>
+      <div class="row">
+        <div id="msg"></div>
+        <button class="btn" type="button" id="clear">Effacer</button>
+      </div>
+    </section>
+  </div>
+
+  <div class="col">
+    <section>
+      <h2>Niveaux du sondage</h2>
+      <div class="tablebox">
+        <table>
+          <thead><tr><th scope="col">hPa</th><th scope="col">Altitude (ft)</th><th scope="col">Hauteur sol (ft)</th></tr></thead>
+          <tbody id="levels"></tbody>
+        </table>
+      </div>
+      <p class="note" id="levelnote"></p>
+    </section>
+  </div>
+
+  <section class="full formula">
+    <h2>La formule</h2>
+    <code>A = 145366,45 × [ (QNH / 1013,25)^0,190284 − (P / 1013,25)^0,190284 ]</code>
+    <code>Correction T = 96,03 × (T − Tstd) × ln(Pref / P)</code>
+    <code id="live"></code>
+    <p>Tstd vaut 15 − 1,98 °C par 1 000 ft d'altitude standard. Pref est la pression au terrain, ou le QNH si le terrain est vide. Cette correction suppose le même écart à la température standard sur toute la couche.</p>
+    <p>L'altitude du terrain ne déplace pas le niveau de pression : elle sert à calculer la hauteur au-dessus du sol et le point de départ de la correction de température.</p>
+    <p>Résultats arrondis à 10 ft. C'est une estimation pour lire un sondage. Elle ne remplace ni l'altimètre ni les données officielles.</p>
+  </section>
+  </div>
+
+  <div id="tab-sondage" class="full" role="tabpanel" aria-labelledby="btn-sondage" hidden>
+    <section class="readout" aria-live="polite">
+      <div class="verdicts">
+        <div class="verdict">
+          <div class="vhead"><span class="vname">Thermiques (Tcon)</span><span class="state" id="v1s">–</span></div>
+          <div class="vvalue" id="v1v">–</div>
+          <p class="vtext" id="v1t"></p>
+        </div>
+        <div class="verdict">
+          <div class="vhead"><span class="vname">Base par saturation (LCL)</span><span class="state" id="v2s">–</span></div>
+          <div class="vvalue" id="v2v">–</div>
+          <p class="vtext" id="v2t"></p>
+        </div>
+        <div class="verdict">
+          <div class="vhead"><span class="vname">Base des cumulus (CCL)</span><span class="state" id="v3s">Si thermiques</span></div>
+          <div class="vvalue" id="v3v">–</div>
+          <p class="vtext" id="v3t"></p>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <form class="fields" id="sform" autocomplete="off">
+        <label>Température maximale prévue
+          <span class="input"><input id="st" inputmode="decimal"><i>°C</i><button type="button" data-sign="st" aria-label="Changer le signe de la température prévue">±</button></span>
+        </label>
+        <label>Tcon
+          <span class="input"><input id="sc" inputmode="decimal"><i>°C</i><button type="button" data-sign="sc" aria-label="Changer le signe de Tcon">±</button></span>
+        </label>
+        <label>LCL
+          <span class="input"><input id="sl" inputmode="decimal"><i>ft</i></span>
+        </label>
+        <label>CCL
+          <span class="input"><input id="sk" inputmode="decimal"><i>ft</i></span>
+        </label>
+        <label>Altitude du terrain
+          <span class="input"><input id="se" inputmode="decimal"><i>ft</i></span>
+        </label>
+      </form>
+      <div class="note" id="smsg"></div>
+    </section>
+
+    <section class="wide" id="exnote">
+      <h2>Lecture de l'exemple</h2>
+      <p><strong>Vendredi 14 h à Saint-Dié : la journée paraît stable et basse, sans thermiques exploitables.</strong></p>
+      <ul>
+        <li><strong>Tcon 9 °C :</strong> AROME prévoit 8 °C. Il manque donc environ 1 °C, soit moins que l'erreur normale d'un modèle.</li>
+        <li><strong>Même à 9 °C :</strong> le sondage montre une couche stable juste au-dessus, vers 900-850 hPa. Les ascendances resteraient faibles et basses, sous un ciel déjà couvert.</li>
+        <li><strong>LCL 891 ft :</strong> la base serait vers 2 230 ft d'altitude, sous 1 000 ft au-dessus du terrain.</li>
+        <li><strong>Base peut-être plus basse :</strong> près du sol, les deux courbes sont très proches, à l'œil. Une brume ou des nuages plus bas restent possibles, surtout après la pluie.</li>
+        <li><strong>CCL 1 043 ft :</strong> son écart avec le LCL est faible, car l'air est déjà très humide.</li>
+      </ul>
+    </section>
+
+    <section class="wide">
+      <h2>Lexique</h2>
+      <dl class="terms">
+        <div><dt>Tcon <span>température de convection</span></dt><dd>Température à atteindre au sol pour que l'air chauffé monte seul jusqu'à former un nuage. Compare-la à la température maximale prévue.</dd></div>
+        <div><dt>LCL <span>condensation par soulèvement</span></dt><dd>Hauteur où l'air du sol sature s'il est soulevé, par le relief ou un front. Repère utile pour les nuages bas : environ 400 ft par °C d'écart entre température et point de rosée.</dd></div>
+        <div><dt>CCL <span>condensation par convection</span></dt><dd>Hauteur probable de la base des cumulus si le sol chauffe assez pour atteindre Tcon. Elle ne veut rien dire si les thermiques ne se déclenchent pas.</dd></div>
+        <div><dt>Hauteurs LCL et CCL</dt><dd>Sur ton écran, elles se lisent comme des hauteurs au-dessus du sol : 891 ft d'altitude serait sous le terrain à 1 342 ft. Ajoute l'altitude du terrain pour obtenir l'altitude.</dd></div>
+        <div><dt>Élévation</dt><dd>Altitude réelle du point choisi. L'élévation du modèle est celle de son relief lissé. Un grand écart rend le sondage moins représentatif.</dd></div>
+        <div><dt>Courbe rouge</dt><dd>Température de l'air selon l'altitude.</dd></div>
+        <div><dt>Courbe bleue</dt><dd>Point de rosée. Plus elle touche la rouge, plus l'air est proche de la saturation. Un net écart signale de l'air plus sec.</dd></div>
+        <div><dt>Inversion</dt><dd>Couche où la température stagne ou augmente en montant. Elle freine les thermiques et retient la brume et les nuages bas.</dd></div>
+        <div><dt>Ligne violette épaisse</dt><dd>Isotherme 0 °C. Son croisement avec la courbe rouge donne l'altitude du gel, utile pour le risque de givrage en nuage.</dd></div>
+        <div><dt>Barbules</dt><dd>Vent à chaque niveau, sur la droite. Un demi-trait vaut 5 kt, un trait 10 kt et un triangle 50 kt. La hampe pointe vers la direction d'où vient le vent.</dd></div>
+        <div><dt>Zones grises à gauche</dt><dd>Elles semblent indiquer les couches nuageuses prévues : plus la bande est soutenue, plus le nuage serait dense.</dd></div>
+        <div><dt>Source</dt><dd>Le modèle utilisé, ici mblue AI. Compare avec un autre modèle : un désaccord signale une prévision moins sûre.</dd></div>
+      </dl>
+      <p class="note">Ces indices se calculent à partir du sol. Ils ne voient ni l'épaisseur des nuages, ni la visibilité, ni le relief autour. Regarde toujours le profil complet, puis les TAF, METAR et prévisions aéronautiques.</p>
+    </section>
+  </div>
+
+</div>
+
+<script>
+var APP_VERSION = '1.0';
+
+var K = 145366.45, N = 0.190284, P0 = 1013.25, RG = 96.03;
+var LEVELS = [1000, 950, 925, 900, 850, 800, 700, 600, 500, 400, 300, 250, 200];
+
+function pressureAltitude(p) { return K * (1 - Math.pow(p / P0, N)); }
+function altitudeOnQnh(p, q) { return K * (Math.pow(q / P0, N) - Math.pow(p / P0, N)); }
+function pressureAt(h, q) { return P0 * Math.pow(Math.pow(q / P0, N) - h / K, 1 / N); }
+function isaTemp(pa) { return Math.max(15 - 1.98 * pa / 1000, -56.5); }
+
+function compute(v) {
+  var q = v.q == null ? P0 : v.q;
+  var std = pressureAltitude(v.p);
+  var base = altitudeOnQnh(v.p, q);
+  var ref = v.e == null ? q : pressureAt(v.e, q);
+  var tstd = isaTemp(std);
+  var dev = v.t == null ? null : v.t - tstd;
+  var corr = (dev != null && v.p < ref) ? RG * dev * Math.log(ref / v.p) : 0;
+  var alt = base + corr;
+  return { std: std, base: base, ref: ref, tstd: tstd, dev: dev, corr: corr, alt: alt,
+           agl: v.e == null ? null : alt - v.e, q: q };
+}
+
+function $(id) { return document.getElementById(id); }
+function store(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+function load(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+
+function fmt(n) { return Math.round(n).toLocaleString('fr-FR'); }
+function ft(n) { return fmt(Math.round(n / 10) * 10); }
+function signed(n) {
+  var r = Math.round(n / 10) * 10;
+  return r === 0 ? '0 ft' : (r > 0 ? '+' : '−') + fmt(Math.abs(r)) + ' ft';
+}
+function dec(n, d) { return n.toLocaleString('fr-FR', { maximumFractionDigits: d }); }
+
+function num(id) {
+  var s = $(id).value.trim().replace(',', '.').replace('−', '-');
+  if (s === '') return null;
+  var n = Number(s);
+  return isFinite(n) ? n : NaN;
+}
+
+var LIMITS = {
+  p: [100, 1100, 'La pression lue doit être entre 100 et 1100 hPa.'],
+  q: [900, 1060, 'Le QNH doit être entre 900 et 1060 hPa.'],
+  e: [-1500, 15000, "L'altitude du terrain doit être entre −1500 et 15000 ft."],
+  t: [-90, 50, 'La température doit être entre −90 et 50 °C.']
+};
+
+function clearOutput() {
+  $('big').textContent = '–';
+  ['agl', 'metres', 'std', 'dq', 'dt', 'isa'].forEach(function (i) { $(i).textContent = '–'; });
+  $('live').textContent = '';
+}
+
+var isExample = false;
+
+function render() {
+  var v = {}, error = null;
+  Object.keys(LIMITS).forEach(function (k) {
+    var n = num(k), l = LIMITS[k];
+    var bad = n !== null && (isNaN(n) || n < l[0] || n > l[1]);
+    $(k).setAttribute('aria-invalid', bad ? 'true' : 'false');
+    if (bad && !error) error = l[2];
+    v[k] = bad ? null : n;
+  });
+
+  renderLevels(v);
+
+  var msg = $('msg');
+  msg.className = error ? 'err' : '';
+  if (error) { msg.textContent = error; clearOutput(); return; }
+  if (v.p == null) { msg.textContent = 'Saisis une pression, par exemple 800.'; clearOutput(); return; }
+
+  var r = compute(v);
+  $('big').innerHTML = ft(r.alt) + '<small>ft</small>';
+  $('metres').textContent = fmt(Math.round(r.alt * 0.3048 / 10) * 10) + ' m';
+  $('std').textContent = ft(r.std) + ' ft';
+  $('dq').textContent = v.q == null ? 'non saisie' : signed(r.base - r.std);
+  $('dt').textContent = v.t == null ? 'non saisie' : signed(r.corr);
+  $('isa').textContent = r.dev == null ? 'non calculé' : (r.dev >= 0 ? '+' : '−') + dec(Math.abs(r.dev), 1) + ' °C';
+  if (r.agl == null) $('agl').textContent = 'terrain vide';
+  else if (r.agl < 0) $('agl').textContent = 'sous le terrain';
+  else $('agl').textContent = ft(r.agl) + ' ft';
+
+  $('live').textContent = 'Ici : A = ' + fmt(r.base) + ' ft ; correction T = ' +
+    (v.t == null ? '0' : fmt(r.corr)) + ' ft ; total = ' + fmt(r.alt) + ' ft';
+
+  if (isExample) msg.textContent = "Exemple : ton sondage de Saint-Dié, vendredi 14 h. QNH et température sont lus à l'œil.";
+  else if (v.q == null) msg.textContent = 'Sans QNH, le résultat est en atmosphère standard.';
+  else msg.textContent = '';
+}
+
+function renderLevels(v) {
+  var tb = $('levels'); tb.textContent = '';
+  var q = v.q == null ? P0 : v.q;
+  LEVELS.forEach(function (lvl) {
+    var a = altitudeOnQnh(lvl, q);
+    var tr = document.createElement('tr');
+    if (v.p === lvl) tr.className = 'on';
+    var c1 = document.createElement('td'), b = document.createElement('button');
+    b.type = 'button'; b.textContent = lvl;
+    b.setAttribute('aria-label', 'Utiliser ' + lvl + ' hectopascals');
+    b.addEventListener('click', function () { $('p').value = lvl; edited(); });
+    c1.appendChild(b); tr.appendChild(c1);
+    var c2 = document.createElement('td'); c2.textContent = ft(a); tr.appendChild(c2);
+    var c3 = document.createElement('td');
+    if (v.e == null) c3.textContent = '–';
+    else if (a < v.e) { c3.textContent = 'sous le sol'; c3.className = 'below'; }
+    else c3.textContent = ft(a - v.e);
+    tr.appendChild(c3);
+    tb.appendChild(tr);
+  });
+  $('levelnote').textContent = 'QNH ' + dec(q, 2) +
+    (v.e == null ? ', terrain non saisi' : ', terrain ' + fmt(v.e) + ' ft') +
+    '. Sans correction de température. Touche un niveau pour le calculer.';
+}
+
+var IDS = ['p', 'q', 'e', 't'];
+function edited() {
+  isExample = false;
+  store('hpa.values', JSON.stringify(IDS.map(function (i) { return $(i).value; })));
+  render();
+}
+IDS.forEach(function (i) { $(i).addEventListener('input', edited); });
+$('form').addEventListener('submit', function (e) { e.preventDefault(); });
+$('sign').addEventListener('click', function () {
+  var s = $('t').value.trim().replace('−', '-');
+  if (s === '') s = '-';
+  else s = s.charAt(0) === '-' ? s.slice(1) : '-' + s;
+  $('t').value = s;
+  if (s !== '-') edited();
+  $('t').focus();
+});
+$('clear').addEventListener('click', function () {
+  IDS.forEach(function (i) { $(i).value = ''; });
+  edited();
+  $('p').focus();
+});
+
+(function restore() {
+  var saved = null;
+  try { saved = JSON.parse(load('hpa.values')); } catch (e) {}
+  var vals = Array.isArray(saved) && saved.length === 4 ? saved : ['800', '1024', '1342', '0'];
+  isExample = !(Array.isArray(saved) && saved.length === 4);
+  IDS.forEach(function (id, n) { $(id).value = vals[n]; });
+})();
+
+
+render();
+
+/* Sounding tab: reads Tcon, LCL and CCL against the forecast and the terrain. */
+var SIDS = ['st', 'sc', 'sl', 'sk', 'se'];
+var SLIMITS = {
+  st: [-60, 50, 'La température prévue doit être entre −60 et 50 °C.'],
+  sc: [-60, 60, 'Tcon doit être entre −60 et 60 °C.'],
+  sl: [0, 40000, 'Le LCL doit être entre 0 et 40000 ft.'],
+  sk: [0, 40000, 'Le CCL doit être entre 0 et 40000 ft.'],
+  se: [-1500, 15000, "L'altitude du terrain doit être entre −1500 et 15000 ft."]
+};
+var sExample = false;
+
+function setState(id, text, alert) {
+  $(id).textContent = text;
+  $(id).className = alert ? 'state alert' : 'state';
+}
+function heights(h, e) {
+  return e == null ? ft(h) + ' ft sol' : ft(h) + ' ft sol · ' + ft(h + e) + ' ft alt.';
+}
+
+function renderSondage() {
+  var v = {}, error = null;
+  SIDS.forEach(function (k) {
+    var n = num(k), l = SLIMITS[k];
+    var bad = n !== null && (isNaN(n) || n < l[0] || n > l[1]);
+    $(k).setAttribute('aria-invalid', bad ? 'true' : 'false');
+    if (bad && !error) error = l[2];
+    v[k] = bad ? null : n;
+  });
+  $('smsg').textContent = error || (sExample
+    ? 'Exemple : Tcon, LCL et CCL de mblue AI, température maximale proche de 8 °C selon AROME.'
+    : 'Le LCL et le CCL se saisissent en hauteur au-dessus du sol.');
+  $('exnote').hidden = !sExample;
+
+  if (v.st == null || v.sc == null) {
+    setState('v1s', 'À compléter'); $('v1v').textContent = '–';
+    $('v1t').textContent = 'Saisis la température prévue et Tcon.';
+  } else {
+    var d = v.st - v.sc, abs = dec(Math.abs(d), 1);
+    $('v1v').textContent = (d >= 0 ? '+' : '−') + abs + ' °C';
+    if (d >= 0) {
+      setState('v1s', 'Possibles', false);
+      $('v1t').textContent = 'La température prévue atteint Tcon. Vérifie ensuite l\'absence d\'inversion et le ciel.';
+    } else if (d >= -1) {
+      setState('v1s', 'Limite', true);
+      $('v1t').textContent = 'Il manque ' + abs + ' °C au sol : un écart trop faible pour conclure.';
+    } else {
+      setState('v1s', 'Peu probables', true);
+      $('v1t').textContent = 'Il manque ' + abs + ' °C au sol pour déclencher la convection.';
+    }
+  }
+
+  if (v.sl == null) {
+    setState('v2s', 'À compléter'); $('v2v').textContent = '–'; $('v2t').textContent = 'Saisis le LCL.';
+  } else {
+    $('v2v').textContent = heights(v.sl, v.se);
+    if (v.sl < 1000) setState('v2s', 'Très bas', true);
+    else if (v.sl < 2000) setState('v2s', 'Bas', true);
+    else setState('v2s', 'Plus haut', false);
+    $('v2t').textContent = 'Repère pour les nuages bas si l\'air est soulevé. Ce n\'est pas une base observée.';
+  }
+
+  if (v.sk == null) {
+    $('v3v').textContent = '–'; $('v3t').textContent = 'Saisis le CCL.';
+  } else {
+    $('v3v').textContent = heights(v.sk, v.se);
+    $('v3t').textContent = 'Valable seulement si le sol atteint Tcon et si rien ne bloque les ascendances.';
+  }
+}
+
+function sEdited() {
+  sExample = false;
+  store('hpa.sond', JSON.stringify(SIDS.map(function (i) { return $(i).value; })));
+  renderSondage();
+}
+SIDS.forEach(function (i) { $(i).addEventListener('input', sEdited); });
+$('sform').addEventListener('submit', function (e) { e.preventDefault(); });
+[].forEach.call(document.querySelectorAll('[data-sign]'), function (b) {
+  b.addEventListener('click', function () {
+    var f = $(b.dataset.sign), s = f.value.trim().replace('−', '-');
+    if (s === '') s = '-';
+    else s = s.charAt(0) === '-' ? s.slice(1) : '-' + s;
+    f.value = s;
+    if (s !== '-') sEdited();
+    f.focus();
+  });
+});
+(function restoreSondage() {
+  var saved = null;
+  try { saved = JSON.parse(load('hpa.sond')); } catch (e) {}
+  var ok = Array.isArray(saved) && saved.length === SIDS.length;
+  sExample = !ok;
+  var vals = ok ? saved : ['8', '9', '891', '1043', '1342'];
+  SIDS.forEach(function (id, n) { $(id).value = vals[n]; });
+})();
+renderSondage();
+
+function showTab(name) {
+  ['calc', 'sondage'].forEach(function (t) {
+    $('tab-' + t).hidden = t !== name;
+    $('btn-' + t).setAttribute('aria-selected', t === name ? 'true' : 'false');
+  });
+  store('hpa.tab', name);
+}
+[].forEach.call(document.querySelectorAll('.tab'), function (b) {
+  b.addEventListener('click', function () { showTab(b.dataset.tab); });
+});
+showTab(load('hpa.tab') === 'sondage' ? 'sondage' : 'calc');
+
+/* Offline and updates: the service worker keeps a copy; a new deployment shows the green banner. */
+(function network() {
+  var net = $('net'), label = 'v' + APP_VERSION + ' · ';
+  if (!navigator.serviceWorker) { net.textContent = label + 'Mode hors connexion indisponible sur ce navigateur'; return; }
+  net.textContent = label + 'Préparation du mode hors connexion…';
+  navigator.serviceWorker.register('sw.js').then(function () { return navigator.serviceWorker.ready; })
+    .then(function () { net.textContent = label + 'Disponible hors connexion'; })
+    .catch(function () { net.textContent = label + 'Mode hors connexion indisponible pour le moment'; });
+
+  function check() {
+    fetch('index.html?check=' + Date.now(), { cache: 'no-store' })
+      .then(function (r) { return r.ok ? r.text() : ''; })
+      .then(function (t) {
+        var m = t.match(/APP_VERSION = '([^']+)'/);
+        if (m && m[1] !== APP_VERSION) $('update').hidden = false;
+      })
+      .catch(function () {});
+  }
+  $('update').addEventListener('click', function () { location.reload(); });
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) check(); });
+  setInterval(check, 60000);
+  check();
+})();
+</script>
+</body>
+</html>
