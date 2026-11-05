@@ -99,9 +99,6 @@ td.below { color: var(--muted); font-family: var(--sans); font-size: .8125rem; }
 .state.alert { color: var(--accent-text); border-color: var(--accent); }
 .vvalue { font: 700 1.5rem/1.2 var(--num); font-variant-numeric: tabular-nums; }
 .vtext { font-size: .875rem; margin: 0; }
-#exnote { display: grid; gap: 8px; }
-#exnote p, #exnote ul { margin: 0; font-size: .9375rem; max-width: 70ch; }
-#exnote ul { padding-left: 1.2em; display: grid; gap: 6px; }
 .terms { margin: 0; display: grid; gap: 0; grid-template-columns: minmax(0, 1fr); }
 @media (min-width: 820px) { .terms { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 28px; } }
 .terms > div { padding: 10px 0; border-bottom: 1px solid var(--line); min-width: 0; }
@@ -143,16 +140,16 @@ td.below { color: var(--muted); font-family: var(--sans); font-size: .8125rem; }
     <section>
       <form class="fields" id="form" autocomplete="off">
         <label>Pression lue
-          <span class="input"><input id="p" inputmode="decimal" aria-describedby="msg"><i>hPa</i></span>
+          <span class="input"><input id="p" inputmode="decimal" aria-describedby="msg" placeholder="800"><i>hPa</i></span>
           <span>Obligatoire</span>
         </label>
         <label>QNH du jour
-          <span class="input"><input id="q" inputmode="decimal"><i>hPa</i></span>
+          <span class="input"><input id="q" inputmode="decimal" placeholder="1013,25"><i>hPa</i></span>
           <span>Vide : 1013,25</span>
         </label>
         <label>Altitude du terrain
           <span class="input"><input id="e" inputmode="decimal"><i>ft</i></span>
-          <span>Pour la hauteur sol</span>
+          <span>Mémorisée</span>
         </label>
         <label>Température au niveau
           <span class="input"><input id="t" inputmode="decimal"><i>°C</i><button type="button" id="sign" aria-label="Changer le signe de la température">±</button></span>
@@ -227,21 +224,10 @@ td.below { color: var(--muted); font-family: var(--sans); font-size: .8125rem; }
         </label>
         <label>Altitude du terrain
           <span class="input"><input id="se" inputmode="decimal"><i>ft</i></span>
+          <span>Mémorisée</span>
         </label>
       </form>
       <div class="note" id="smsg"></div>
-    </section>
-
-    <section class="wide" id="exnote">
-      <h2>Lecture de l'exemple</h2>
-      <p><strong>Vendredi 14 h à Saint-Dié : la journée paraît stable et basse, sans thermiques exploitables.</strong></p>
-      <ul>
-        <li><strong>Tcon 9 °C :</strong> AROME prévoit 8 °C. Il manque donc environ 1 °C, soit moins que l'erreur normale d'un modèle.</li>
-        <li><strong>Même à 9 °C :</strong> le sondage montre une couche stable juste au-dessus, vers 900-850 hPa. Les ascendances resteraient faibles et basses, sous un ciel déjà couvert.</li>
-        <li><strong>LCL 891 ft :</strong> la base serait vers 2 230 ft d'altitude, sous 1 000 ft au-dessus du terrain.</li>
-        <li><strong>Base peut-être plus basse :</strong> près du sol, les deux courbes sont très proches, à l'œil. Une brume ou des nuages plus bas restent possibles, surtout après la pluie.</li>
-        <li><strong>CCL 1 043 ft :</strong> son écart avec le LCL est faible, car l'air est déjà très humide.</li>
-      </ul>
     </section>
 
     <section class="wide">
@@ -250,7 +236,7 @@ td.below { color: var(--muted); font-family: var(--sans); font-size: .8125rem; }
         <div><dt>Tcon <span>température de convection</span></dt><dd>Température à atteindre au sol pour que l'air chauffé monte seul jusqu'à former un nuage. Compare-la à la température maximale prévue.</dd></div>
         <div><dt>LCL <span>condensation par soulèvement</span></dt><dd>Hauteur où l'air du sol sature s'il est soulevé, par le relief ou un front. Repère utile pour les nuages bas : environ 400 ft par °C d'écart entre température et point de rosée.</dd></div>
         <div><dt>CCL <span>condensation par convection</span></dt><dd>Hauteur probable de la base des cumulus si le sol chauffe assez pour atteindre Tcon. Elle ne veut rien dire si les thermiques ne se déclenchent pas.</dd></div>
-        <div><dt>Hauteurs LCL et CCL</dt><dd>Sur ton écran, elles se lisent comme des hauteurs au-dessus du sol : 891 ft d'altitude serait sous le terrain à 1 342 ft. Ajoute l'altitude du terrain pour obtenir l'altitude.</dd></div>
+        <div><dt>Hauteurs LCL et CCL</dt><dd>Sur l'écran du sondage, elles se lisent comme des hauteurs au-dessus du sol. Ajoute l'altitude du terrain pour obtenir l'altitude.</dd></div>
         <div><dt>Élévation</dt><dd>Altitude réelle du point choisi. L'élévation du modèle est celle de son relief lissé. Un grand écart rend le sondage moins représentatif.</dd></div>
         <div><dt>Courbe rouge</dt><dd>Température de l'air selon l'altitude.</dd></div>
         <div><dt>Courbe bleue</dt><dd>Point de rosée. Plus elle touche la rouge, plus l'air est proche de la saturation. Un net écart signale de l'air plus sec.</dd></div>
@@ -258,7 +244,7 @@ td.below { color: var(--muted); font-family: var(--sans); font-size: .8125rem; }
         <div><dt>Ligne violette épaisse</dt><dd>Isotherme 0 °C. Son croisement avec la courbe rouge donne l'altitude du gel, utile pour le risque de givrage en nuage.</dd></div>
         <div><dt>Barbules</dt><dd>Vent à chaque niveau, sur la droite. Un demi-trait vaut 5 kt, un trait 10 kt et un triangle 50 kt. La hampe pointe vers la direction d'où vient le vent.</dd></div>
         <div><dt>Zones grises à gauche</dt><dd>Elles semblent indiquer les couches nuageuses prévues : plus la bande est soutenue, plus le nuage serait dense.</dd></div>
-        <div><dt>Source</dt><dd>Le modèle utilisé, ici mblue AI. Compare avec un autre modèle : un désaccord signale une prévision moins sûre.</dd></div>
+        <div><dt>Source</dt><dd>Le modèle utilisé pour le sondage. Compare avec un autre modèle : un désaccord signale une prévision moins sûre.</dd></div>
       </dl>
       <p class="note">Ces indices se calculent à partir du sol. Ils ne voient ni l'épaisseur des nuages, ni la visibilité, ni le relief autour. Regarde toujours le profil complet, puis les TAF, METAR et prévisions aéronautiques.</p>
     </section>
@@ -267,7 +253,7 @@ td.below { color: var(--muted); font-family: var(--sans); font-size: .8125rem; }
 </div>
 
 <script>
-var APP_VERSION = '1.0';
+var APP_VERSION = '1.1';
 
 var K = 145366.45, N = 0.190284, P0 = 1013.25, RG = 96.03;
 var LEVELS = [1000, 950, 925, 900, 850, 800, 700, 600, 500, 400, 300, 250, 200];
@@ -322,8 +308,6 @@ function clearOutput() {
   $('live').textContent = '';
 }
 
-var isExample = false;
-
 function render() {
   var v = {}, error = null;
   Object.keys(LIMITS).forEach(function (k) {
@@ -355,8 +339,7 @@ function render() {
   $('live').textContent = 'Ici : A = ' + fmt(r.base) + ' ft ; correction T = ' +
     (v.t == null ? '0' : fmt(r.corr)) + ' ft ; total = ' + fmt(r.alt) + ' ft';
 
-  if (isExample) msg.textContent = "Exemple : ton sondage de Saint-Dié, vendredi 14 h. QNH et température sont lus à l'œil.";
-  else if (v.q == null) msg.textContent = 'Sans QNH, le résultat est en atmosphère standard.';
+  if (v.q == null) msg.textContent = 'Sans QNH, le résultat est en atmosphère standard.';
   else msg.textContent = '';
 }
 
@@ -386,10 +369,22 @@ function renderLevels(v) {
 }
 
 var IDS = ['p', 'q', 'e', 't'];
+/* Weather values only last for the current session: they go stale. The terrain is kept. */
+var WEATHER = ['p', 'q', 't', 'st', 'sc', 'sl', 'sk'];
+function saveSession() {
+  var o = {};
+  WEATHER.forEach(function (id) { o[id] = $(id).value; });
+  try { sessionStorage.setItem('hpa.session', JSON.stringify(o)); } catch (e) {}
+}
+function saveTerrain(from, to) {
+  store('hpa.terrain', $(from).value);
+  $(to).value = $(from).value;
+}
 function edited() {
-  isExample = false;
-  store('hpa.values', JSON.stringify(IDS.map(function (i) { return $(i).value; })));
+  saveSession();
+  saveTerrain('e', 'se');
   render();
+  if (typeof renderSondage === 'function') renderSondage();
 }
 IDS.forEach(function (i) { $(i).addEventListener('input', edited); });
 $('form').addEventListener('submit', function (e) { e.preventDefault(); });
@@ -402,17 +397,19 @@ $('sign').addEventListener('click', function () {
   $('t').focus();
 });
 $('clear').addEventListener('click', function () {
-  IDS.forEach(function (i) { $(i).value = ''; });
+  ['p', 'q', 't'].forEach(function (i) { $(i).value = ''; });
   edited();
   $('p').focus();
 });
 
 (function restore() {
   var saved = null;
-  try { saved = JSON.parse(load('hpa.values')); } catch (e) {}
-  var vals = Array.isArray(saved) && saved.length === 4 ? saved : ['800', '1024', '1342', '0'];
-  isExample = !(Array.isArray(saved) && saved.length === 4);
-  IDS.forEach(function (id, n) { $(id).value = vals[n]; });
+  try { saved = JSON.parse(sessionStorage.getItem('hpa.session')); } catch (e) {}
+  saved = saved || {};
+  WEATHER.forEach(function (id) { $(id).value = saved[id] || ''; });
+  var terrain = load('hpa.terrain') || '';
+  $('e').value = terrain;
+  $('se').value = terrain;
 })();
 
 
@@ -427,7 +424,6 @@ var SLIMITS = {
   sk: [0, 40000, 'Le CCL doit être entre 0 et 40000 ft.'],
   se: [-1500, 15000, "L'altitude du terrain doit être entre −1500 et 15000 ft."]
 };
-var sExample = false;
 
 function setState(id, text, alert) {
   $(id).textContent = text;
@@ -446,10 +442,7 @@ function renderSondage() {
     if (bad && !error) error = l[2];
     v[k] = bad ? null : n;
   });
-  $('smsg').textContent = error || (sExample
-    ? 'Exemple : Tcon, LCL et CCL de mblue AI, température maximale proche de 8 °C selon AROME.'
-    : 'Le LCL et le CCL se saisissent en hauteur au-dessus du sol.');
-  $('exnote').hidden = !sExample;
+  $('smsg').textContent = error || 'Le LCL et le CCL se saisissent en hauteur au-dessus du sol.';
 
   if (v.st == null || v.sc == null) {
     setState('v1s', 'À compléter'); $('v1v').textContent = '–';
@@ -488,8 +481,9 @@ function renderSondage() {
 }
 
 function sEdited() {
-  sExample = false;
-  store('hpa.sond', JSON.stringify(SIDS.map(function (i) { return $(i).value; })));
+  saveSession();
+  saveTerrain('se', 'e');
+  render();
   renderSondage();
 }
 SIDS.forEach(function (i) { $(i).addEventListener('input', sEdited); });
@@ -504,14 +498,6 @@ $('sform').addEventListener('submit', function (e) { e.preventDefault(); });
     f.focus();
   });
 });
-(function restoreSondage() {
-  var saved = null;
-  try { saved = JSON.parse(load('hpa.sond')); } catch (e) {}
-  var ok = Array.isArray(saved) && saved.length === SIDS.length;
-  sExample = !ok;
-  var vals = ok ? saved : ['8', '9', '891', '1043', '1342'];
-  SIDS.forEach(function (id, n) { $(id).value = vals[n]; });
-})();
 renderSondage();
 
 function showTab(name) {
