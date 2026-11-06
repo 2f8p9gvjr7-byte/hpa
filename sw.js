@@ -1,5 +1,5 @@
 // Network first: online gets the latest deployment, offline uses the saved copy.
-const CACHE = 'hpa-en-pieds-v2';
+const CACHE = 'hpa-en-pieds-v1';
 const FILES = ['./', 'index.html', 'manifest.json', 'icon-192.png', 'icon-512.png'];
 
 self.addEventListener('install', e => {

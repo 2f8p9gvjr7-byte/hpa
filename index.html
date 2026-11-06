@@ -88,6 +88,13 @@ td.below { color: var(--muted); font-family: var(--sans); font-size: .8125rem; }
 .tab[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); }
 .tab:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 #tab-calc { display: contents; }
+#tab-col { display: grid; gap: 20px; grid-template-columns: minmax(0, 1fr); min-width: 0; }
+@media (min-width: 820px) { #tab-col { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; } #tab-col > .wide { grid-column: 1 / -1; } }
+#tab-col .verdicts { border-top: 1px solid var(--line); padding-top: 12px; }
+.outbox { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 10px 12px; display: grid; gap: 4px; align-content: start; min-width: 0; }
+.outbox span { font-size: .875rem; color: var(--muted); }
+.outbox b { font: 700 1.4rem var(--num); font-variant-numeric: tabular-nums; color: var(--accent-text); }
+.sub { margin-top: 6px; }
 #tab-sondage { display: grid; gap: 20px; grid-template-columns: minmax(0, 1fr); min-width: 0; }
 @media (min-width: 820px) { #tab-sondage { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; } #tab-sondage > .wide { grid-column: 1 / -1; } }
 .verdicts { display: grid; gap: 12px; }
@@ -118,6 +125,7 @@ td.below { color: var(--muted); font-family: var(--sans); font-size: .8125rem; }
   <nav class="tabs full" role="tablist" aria-label="Sections">
     <button class="tab" type="button" role="tab" id="btn-calc" aria-controls="tab-calc" data-tab="calc">Calcul</button>
     <button class="tab" type="button" role="tab" id="btn-sondage" aria-controls="tab-sondage" data-tab="sondage">Sondage</button>
+    <button class="tab" type="button" role="tab" id="btn-col" aria-controls="tab-col" data-tab="col">Col</button>
   </nav>
 
   <div id="tab-calc" role="tabpanel" aria-labelledby="btn-calc">
@@ -140,11 +148,11 @@ td.below { color: var(--muted); font-family: var(--sans); font-size: .8125rem; }
     <section>
       <form class="fields" id="form" autocomplete="off">
         <label>Pression lue
-          <span class="input"><input id="p" inputmode="decimal" aria-describedby="msg" placeholder="800"><i>hPa</i></span>
+          <span class="input"><input id="p" inputmode="decimal" aria-describedby="msg"><i>hPa</i></span>
           <span>Obligatoire</span>
         </label>
         <label>QNH du jour
-          <span class="input"><input id="q" inputmode="decimal" placeholder="1013,25"><i>hPa</i></span>
+          <span class="input"><input id="q" inputmode="decimal"><i>hPa</i></span>
           <span>Vide : 1013,25</span>
         </label>
         <label>Altitude du terrain
@@ -164,18 +172,14 @@ td.below { color: var(--muted); font-family: var(--sans); font-size: .8125rem; }
 
     <section>
       <h2>Dans l'autre sens : altitude → pression</h2>
-      <form class="fields" id="iform" autocomplete="off">
+      <div class="fields">
         <label>Altitude de vol
-          <span class="input"><input id="ia" inputmode="decimal" placeholder="3500"><i>ft</i></span>
+          <span class="input"><input id="va" inputmode="decimal"><i>ft</i></span>
           <span>Utilise le QNH saisi plus haut</span>
         </label>
-        <div class="readout" style="padding:10px 12px;gap:2px" aria-live="polite">
-          <div class="biglabel" style="margin:0">Niveau à lire sur le sondage</div>
-          <div class="vvalue" id="iout">–</div>
-          <div class="vtext" id="inear" style="color:var(--muted)"></div>
-        </div>
-      </form>
-      <p class="note" id="imsg">Pour savoir où regarder sur le sondage à votre altitude de croisière. Sans correction de température.</p>
+        <div class="outbox" aria-live="polite"><span>Niveau à lire sur le sondage</span><b id="vlvl">–</b></div>
+      </div>
+      <p class="note">Pour savoir où regarder sur le sondage à ton altitude de croisière. Sans correction de température.</p>
     </section>
   </div>
 
@@ -217,11 +221,6 @@ td.below { color: var(--muted); font-family: var(--sans); font-size: .8125rem; }
           <p class="vtext" id="v2t"></p>
         </div>
         <div class="verdict">
-          <div class="vhead"><span class="vname">Base estimée depuis le METAR</span><span class="state" id="v4s">–</span></div>
-          <div class="vvalue" id="v4v">–</div>
-          <p class="vtext" id="v4t"></p>
-        </div>
-        <div class="verdict">
           <div class="vhead"><span class="vname">Base des cumulus (CCL)</span><span class="state" id="v3s">Si thermiques</span></div>
           <div class="vvalue" id="v3v">–</div>
           <p class="vtext" id="v3t"></p>
@@ -243,12 +242,6 @@ td.below { color: var(--muted); font-family: var(--sans); font-size: .8125rem; }
         <label>CCL
           <span class="input"><input id="sk" inputmode="decimal"><i>ft</i></span>
         </label>
-        <label>Température (METAR)
-          <span class="input"><input id="mt" inputmode="decimal" placeholder="12"><i>°C</i><button type="button" data-sign="mt" aria-label="Changer le signe de la température du METAR">±</button></span>
-        </label>
-        <label>Point de rosée (METAR)
-          <span class="input"><input id="md" inputmode="decimal" placeholder="4"><i>°C</i><button type="button" data-sign="md" aria-label="Changer le signe du point de rosée">±</button></span>
-        </label>
         <label>Altitude du terrain
           <span class="input"><input id="se" inputmode="decimal"><i>ft</i></span>
           <span>Mémorisée</span>
@@ -263,8 +256,7 @@ td.below { color: var(--muted); font-family: var(--sans); font-size: .8125rem; }
         <div><dt>Tcon <span>température de convection</span></dt><dd>Température à atteindre au sol pour que l'air chauffé monte seul jusqu'à former un nuage. Compare-la à la température maximale prévue.</dd></div>
         <div><dt>LCL <span>condensation par soulèvement</span></dt><dd>Hauteur où l'air du sol sature s'il est soulevé, par le relief ou un front. Repère utile pour les nuages bas : environ 400 ft par °C d'écart entre température et point de rosée.</dd></div>
         <div><dt>CCL <span>condensation par convection</span></dt><dd>Hauteur probable de la base des cumulus si le sol chauffe assez pour atteindre Tcon. Elle ne veut rien dire si les thermiques ne se déclenchent pas.</dd></div>
-        <div><dt>Hauteurs LCL et CCL</dt><dd>Lis-les comme des hauteurs au-dessus du sol. Mais d'après des utilisateurs du forum Windy, elles sont calculées à partir du niveau 1000 hPa et non du sol réel : en terrain élevé ou par haute pression, elles peuvent être décalées de quelques centaines de pieds. À prendre comme un ordre de grandeur.</dd></div>
-        <div><dt>Base depuis le METAR</dt><dd>Règle de pouce : environ 400 ft (125 m) par °C d'écart entre température et point de rosée. Ex. 12/04 : 8 °C d'écart, base vers 3 200 ft au-dessus du terrain.</dd></div>
+        <div><dt>Hauteurs LCL et CCL</dt><dd>Sur l'écran du sondage, elles se lisent comme des hauteurs au-dessus du sol. Ajoute l'altitude du terrain pour obtenir l'altitude.</dd></div>
         <div><dt>Élévation</dt><dd>Altitude réelle du point choisi. L'élévation du modèle est celle de son relief lissé. Un grand écart rend le sondage moins représentatif.</dd></div>
         <div><dt>Courbe rouge</dt><dd>Température de l'air selon l'altitude.</dd></div>
         <div><dt>Courbe bleue</dt><dd>Point de rosée. Plus elle touche la rouge, plus l'air est proche de la saturation. Un net écart signale de l'air plus sec.</dd></div>
@@ -275,6 +267,96 @@ td.below { color: var(--muted); font-family: var(--sans); font-size: .8125rem; }
         <div><dt>Source</dt><dd>Le modèle utilisé pour le sondage. Compare avec un autre modèle : un désaccord signale une prévision moins sûre.</dd></div>
       </dl>
       <p class="note">Ces indices se calculent à partir du sol. Ils ne voient ni l'épaisseur des nuages, ni la visibilité, ni le relief autour. Regarde toujours le profil complet, puis les TAF, METAR et prévisions aéronautiques.</p>
+    </section>
+  </div>
+
+  <div id="tab-col" class="full" role="tabpanel" aria-labelledby="btn-col" hidden>
+    <section class="readout" aria-live="polite">
+      <div>
+        <div class="biglabel">Niveau à lire sur le sondage</div>
+        <div class="big" id="clvl">–</div>
+      </div>
+      <dl class="facts">
+        <div><dt>Altitude de passage</dt><dd id="cpass">–</dd></div>
+        <div><dt>Isotherme 0 °C</dt><dd id="ciso">–</dd></div>
+      </dl>
+      <div class="verdicts">
+        <div class="verdict">
+          <div class="vhead"><span class="vname">Nuages au passage</span><span class="state" id="k1s">–</span></div>
+          <div class="vvalue" id="k1v">–</div>
+          <p class="vtext" id="k1t"></p>
+        </div>
+        <div class="verdict">
+          <div class="vhead"><span class="vname">Givrage en nuage</span><span class="state" id="k2s">–</span></div>
+          <div class="vvalue" id="k2v">–</div>
+          <p class="vtext" id="k2t"></p>
+        </div>
+        <div class="verdict">
+          <div class="vhead"><span class="vname">Givrage carburateur</span><span class="state" id="k3s">–</span></div>
+          <div class="vvalue" id="k3v">–</div>
+          <p class="vtext" id="k3t"></p>
+        </div>
+        <div class="verdict">
+          <div class="vhead"><span class="vname">Vent sur le col</span><span class="state" id="k4s">–</span></div>
+          <div class="vvalue" id="k4v">–</div>
+          <p class="vtext" id="k4t"></p>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Le col</h2>
+      <form class="fields" id="cform1" autocomplete="off">
+        <label>Altitude du col
+          <span class="input"><input id="ca" inputmode="decimal"><i>ft</i></span>
+          <span>Mémorisée</span>
+        </label>
+        <label>Marge au-dessus
+          <span class="input"><input id="cm" inputmode="decimal"><i>ft</i></span>
+          <span>Vide : 1 000 ft. Mémorisée</span>
+        </label>
+        <label>QNH prévu
+          <span class="input"><input id="cq" inputmode="decimal"><i>hPa</i></span>
+          <span>Commun avec Calcul</span>
+        </label>
+        <label>Axe de la crête
+          <span class="input"><input id="cr" inputmode="decimal"><i>°</i></span>
+          <span>Ex. 20 pour les Vosges. Mémorisé</span>
+        </label>
+      </form>
+
+      <h2 class="sub">Lu sur le sondage au niveau affiché</h2>
+      <form class="fields" id="cform2" autocomplete="off">
+        <label>Température
+          <span class="input"><input id="ct" inputmode="decimal"><i>°C</i><button type="button" data-sign="ct" aria-label="Changer le signe de la température">±</button></span>
+          <span>Courbe rouge</span>
+        </label>
+        <label>Point de rosée
+          <span class="input"><input id="cd" inputmode="decimal"><i>°C</i><button type="button" data-sign="cd" aria-label="Changer le signe du point de rosée">±</button></span>
+          <span>Courbe bleue</span>
+        </label>
+        <label>Vent : direction
+          <span class="input"><input id="cwd" inputmode="decimal"><i>°</i></span>
+          <span>D'où il vient</span>
+        </label>
+        <label>Vent : force
+          <span class="input"><input id="cws" inputmode="decimal"><i>kt</i></span>
+          <span>Barbule à droite</span>
+        </label>
+        <label>Niveau du 0 °C
+          <span class="input"><input id="c0" inputmode="decimal"><i>hPa</i></span>
+          <span>Rouge × violet épais</span>
+        </label>
+      </form>
+      <div class="row">
+        <div id="cmsg" class="note"></div>
+        <button class="btn" type="button" id="cclear">Effacer la météo</button>
+      </div>
+    </section>
+
+    <section class="wide">
+      <h2>À savoir</h2>
+      <p class="note">Ouvre le sondage sur le col lui-même dans Windy, pas sur ton terrain de départ, et à l'heure prévue du passage. La marge sert aussi contre les rabattants : élargis-la quand le vent est fort. Les seuils affichés sont des repères indicatifs. Ils ne remplacent ni le manuel de vol ni les prévisions aéronautiques.</p>
     </section>
   </div>
 
@@ -396,29 +478,9 @@ function renderLevels(v) {
     '. Sans correction de température. Touche un niveau pour le calculer.';
 }
 
-function renderInverse() {
-  var a = num('ia'), q = num('q'), msg = $('imsg');
-  if (q == null || isNaN(q) || q < 900 || q > 1060) q = P0;
-  $('ia').setAttribute('aria-invalid', 'false');
-  $('inear').textContent = '';
-  if (a == null) { $('iout').textContent = '–'; return; }
-  if (isNaN(a) || a < -1500 || a > 45000) {
-    $('ia').setAttribute('aria-invalid', 'true'); $('iout').textContent = '–';
-    msg.textContent = "L'altitude doit être entre −1500 et 45000 ft."; msg.className = 'note err'; return;
-  }
-  msg.className = 'note';
-  msg.textContent = 'QNH ' + dec(q, 2) + ' hPa. Pour savoir où regarder sur le sondage à votre altitude de croisière. Sans correction de température.';
-  var p = pressureAt(a, q);
-  var near = LEVELS.reduce(function (b, l) { return Math.abs(l - p) < Math.abs(b - p) ? l : b; }, LEVELS[0]);
-  $('iout').textContent = dec(Math.round(p), 0) + ' hPa';
-  $('inear').textContent = 'Niveau du sondage le plus proche : ' + near + ' hPa';
-}
-$('ia').addEventListener('input', function () { saveSession(); renderInverse(); });
-$('iform').addEventListener('submit', function (e) { e.preventDefault(); });
-
 var IDS = ['p', 'q', 'e', 't'];
 /* Weather values only last for the current session: they go stale. The terrain is kept. */
-var WEATHER = ['p', 'q', 't', 'st', 'sc', 'sl', 'sk', 'mt', 'md', 'ia'];
+var WEATHER = ['p', 'q', 't', 'va', 'st', 'sc', 'sl', 'sk', 'ct', 'cd', 'cwd', 'cws', 'c0'];
 function saveSession() {
   var o = {};
   WEATHER.forEach(function (id) { o[id] = $(id).value; });
@@ -431,10 +493,21 @@ function saveTerrain(from, to) {
 function edited() {
   saveSession();
   saveTerrain('e', 'se');
+  $('cq').value = $('q').value;
+  saveSession();
   render();
-  renderInverse();
+  renderReverse();
   if (typeof renderSondage === 'function') renderSondage();
+  if (typeof renderCol === 'function') renderCol();
 }
+function renderReverse() {
+  var h = num('va'), qv = num('q');
+  var q = qv == null || isNaN(qv) || qv < 900 || qv > 1060 ? P0 : qv;
+  var bad = h !== null && (isNaN(h) || h < -1500 || h > 45000);
+  $('va').setAttribute('aria-invalid', bad ? 'true' : 'false');
+  $('vlvl').textContent = h == null ? '–' : bad ? 'Entre −1500 et 45000 ft' : fmt(pressureAt(h, q)) + ' hPa';
+}
+$('va').addEventListener('input', edited);
 IDS.forEach(function (i) { $(i).addEventListener('input', edited); });
 $('form').addEventListener('submit', function (e) { e.preventDefault(); });
 $('sign').addEventListener('click', function () {
@@ -459,22 +532,21 @@ $('clear').addEventListener('click', function () {
   var terrain = load('hpa.terrain') || '';
   $('e').value = terrain;
   $('se').value = terrain;
+  $('cq').value = $('q').value;
 })();
+renderReverse();
 
 
 render();
-renderInverse();
 
 /* Sounding tab: reads Tcon, LCL and CCL against the forecast and the terrain. */
-var SIDS = ['st', 'sc', 'sl', 'sk', 'se', 'mt', 'md'];
+var SIDS = ['st', 'sc', 'sl', 'sk', 'se'];
 var SLIMITS = {
   st: [-60, 50, 'La température prévue doit être entre −60 et 50 °C.'],
   sc: [-60, 60, 'Tcon doit être entre −60 et 60 °C.'],
   sl: [0, 40000, 'Le LCL doit être entre 0 et 40000 ft.'],
   sk: [0, 40000, 'Le CCL doit être entre 0 et 40000 ft.'],
-  se: [-1500, 15000, "L'altitude du terrain doit être entre −1500 et 15000 ft."],
-  mt: [-60, 50, 'La température du METAR doit être entre −60 et 50 °C.'],
-  md: [-70, 40, 'Le point de rosée doit être entre −70 et 40 °C.']
+  se: [-1500, 15000, "L'altitude du terrain doit être entre −1500 et 15000 ft."]
 };
 
 function setState(id, text, alert) {
@@ -524,20 +596,6 @@ function renderSondage() {
     $('v2t').textContent = 'Repère pour les nuages bas si l\'air est soulevé. Ce n\'est pas une base observée.';
   }
 
-  if (v.mt == null || v.md == null) {
-    setState('v4s', 'À compléter'); $('v4v').textContent = '–';
-    $('v4t').textContent = 'Saisis la température et le point de rosée du METAR (ex. 12/04).';
-  } else if (v.md > v.mt) {
-    setState('v4s', 'À vérifier', true); $('v4v').textContent = '–';
-    $('v4t').textContent = 'Le point de rosée ne peut pas dépasser la température.';
-  } else {
-    var sp = v.mt - v.md, hb = sp * 400;
-    $('v4v').textContent = heights(hb, v.se);
-    if (sp <= 1) { setState('v4s', 'Saturé', true); $('v4t').textContent = 'Écart de ' + dec(sp, 1) + ' °C : brouillard, stratus ou bruine probables.'; }
-    else if (sp <= 3) { setState('v4s', 'Bas', true); $('v4t').textContent = 'Écart de ' + dec(sp, 1) + ' °C : air humide, nuages bas possibles.'; }
-    else { setState('v4s', 'Air sec', false); $('v4t').textContent = 'Écart de ' + dec(sp, 1) + ' °C : base des nuages de convection vers cette hauteur, s\'ils se forment.'; }
-  }
-
   if (v.sk == null) {
     $('v3v').textContent = '–'; $('v3t').textContent = 'Saisis le CCL.';
   } else {
@@ -551,6 +609,7 @@ function sEdited() {
   saveTerrain('se', 'e');
   render();
   renderSondage();
+  renderCol();
 }
 SIDS.forEach(function (i) { $(i).addEventListener('input', sEdited); });
 $('sform').addEventListener('submit', function (e) { e.preventDefault(); });
@@ -560,14 +619,131 @@ $('sform').addEventListener('submit', function (e) { e.preventDefault(); });
     if (s === '') s = '-';
     else s = s.charAt(0) === '-' ? s.slice(1) : '-' + s;
     f.value = s;
-    if (s !== '-') sEdited();
+    if (s !== '-') f.dispatchEvent(new Event('input'));
     f.focus();
   });
 });
 renderSondage();
 
+/* Col tab: level to read for a crossing altitude, then a reading of the sounding at that level. */
+var CGEO = ['ca', 'cm', 'cr'];
+var CLIMITS = {
+  ca: [0, 15000, "L'altitude du col doit être entre 0 et 15000 ft."],
+  cm: [0, 5000, 'La marge doit être entre 0 et 5000 ft.'],
+  cq: [900, 1060, 'Le QNH doit être entre 900 et 1060 hPa.'],
+  cr: [0, 360, "L'axe de la crête doit être entre 0 et 360°."],
+  ct: [-60, 50, 'La température doit être entre −60 et 50 °C.'],
+  cd: [-80, 50, 'Le point de rosée doit être entre −80 et 50 °C.'],
+  cwd: [0, 360, 'La direction du vent doit être entre 0 et 360°.'],
+  cws: [0, 200, 'La force du vent doit être entre 0 et 200 kt.'],
+  c0: [100, 1100, 'Le niveau du 0 °C doit être entre 100 et 1100 hPa.']
+};
+var CARD = ['nord', 'nord-est', 'est', 'sud-est', 'sud', 'sud-ouest', 'ouest', 'nord-ouest'];
+function cardinal(d) { return CARD[Math.round((((d % 360) + 360) % 360) / 45) % 8]; }
+function rh(t, td) { return 100 * Math.exp(17.625 * td / (243.04 + td)) / Math.exp(17.625 * t / (243.04 + t)); }
+function deg(n) { return (n >= 0 ? '+' : '−') + dec(Math.abs(n), 1) + ' °C'; }
+function verdict(k, state, alert, value, text) {
+  setState(k + 's', state, alert);
+  $(k + 'v').textContent = value;
+  $(k + 't').textContent = text;
+}
+
+function renderCol() {
+  var v = {}, error = null;
+  Object.keys(CLIMITS).forEach(function (k) {
+    var n = num(k), l = CLIMITS[k];
+    var bad = n !== null && (isNaN(n) || n < l[0] || n > l[1]);
+    $(k).setAttribute('aria-invalid', bad ? 'true' : 'false');
+    if (bad && !error) error = l[2];
+    v[k] = bad ? null : n;
+  });
+  if (!error && v.ct != null && v.cd != null && v.cd > v.ct) error = 'Le point de rosée ne peut pas dépasser la température.';
+  var q = v.cq == null ? P0 : v.cq;
+  var terrain = num('e');
+  if (terrain != null && (isNaN(terrain) || terrain < -1500 || terrain > 15000)) terrain = null;
+
+  var pass = v.ca == null ? null : v.ca + (v.cm == null ? 1000 : v.cm);
+  $('cpass').textContent = pass == null ? '–' : ft(pass) + ' ft';
+  if (pass == null) $('clvl').textContent = '–';
+  else $('clvl').innerHTML = fmt(pressureAt(pass, q)) + '<small>hPa</small>';
+
+  var alt0 = v.c0 == null ? null : compute({ p: v.c0, q: v.cq, e: terrain, t: 0 }).alt;
+  $('ciso').textContent = alt0 == null ? '–' : ft(alt0) + ' ft';
+
+  $('cmsg').className = error ? 'note err' : 'note';
+  $('cmsg').style.color = error ? 'var(--accent-text)' : '';
+  $('cmsg').textContent = error || (pass == null ? "Saisis l'altitude du col." :
+    v.cq == null ? 'Sans QNH, le niveau est calculé en atmosphère standard.' : '');
+
+  var spread = v.ct != null && v.cd != null && !error ? v.ct - v.cd : null;
+
+  if (spread == null) verdict('k1', 'À compléter', false, '–', 'Saisis la température et le point de rosée lus au niveau affiché.');
+  else if (spread <= 1) verdict('k1', 'En nuage probable', true, 'Écart ' + dec(spread, 1) + ' °C', 'Les courbes se touchent : le col est probablement dans les nuages.');
+  else if (spread <= 3) verdict('k1', 'Proche saturation', true, 'Écart ' + dec(spread, 1) + ' °C', 'Nuages ou brume possibles au passage.');
+  else verdict('k1', 'Air sec', false, 'Écart ' + dec(spread, 1) + ' °C', 'Pas de nuage attendu à ce niveau.');
+
+  var neg = v.ct != null ? v.ct <= 0 : (alt0 != null && pass != null ? pass >= alt0 : null);
+  var tval = v.ct != null ? deg(v.ct) : '–';
+  if (neg == null || pass == null) verdict('k2', 'À compléter', false, tval, 'Saisis la température au niveau ou le niveau du 0 °C.');
+  else if (neg && spread != null && spread <= 2) verdict('k2', 'Risque', true, tval, 'Température négative en air saturé : givrage probable dans les nuages.');
+  else if (neg && spread == null) verdict('k2', 'À vérifier', true, tval, "Négatif au passage. Saisis le point de rosée pour juger de l'humidité.");
+  else if (neg) verdict('k2', 'Hors nuage', true, tval, "Négatif au passage : n'entre pas dans les nuages.");
+  else if (alt0 != null && alt0 - pass < 1000) verdict('k2', 'Isotherme proche', true, tval, 'Le 0 °C est à ' + ft(Math.max(alt0 - pass, 0)) + ' ft seulement au-dessus du passage.');
+  else verdict('k2', 'Faible', false, tval, alt0 == null ? 'Température positive au passage.' : 'Le 0 °C est ' + ft(alt0 - pass) + ' ft au-dessus du passage.');
+
+  if (spread == null) verdict('k3', 'À compléter', false, '–', 'Saisis la température et le point de rosée.');
+  else {
+    var hr = Math.round(rh(v.ct, v.cd)) + ' % HR';
+    var inRange = v.ct >= -10 && v.ct <= 30;
+    if (inRange && spread <= 5) verdict('k3', 'Fort', true, hr, 'Air humide et température favorable : surveille le moteur et applique le réchauffage carburateur selon le manuel.');
+    else if (inRange && spread <= 12) verdict('k3', 'Modéré', true, hr, 'Risque surtout à puissance réduite, en descente.');
+    else verdict('k3', 'Faible', false, hr, 'Air sec ou température hors de la plage habituelle.');
+  }
+
+  if (v.cws == null) verdict('k4', 'À compléter', false, '–', 'Saisis la direction et la force du vent.');
+  else {
+    var wv = (v.cwd == null ? '' : fmt(v.cwd) + '° / ') + fmt(v.cws) + ' kt';
+    var lee = v.cwd == null ? '' : ' Côté sous le vent : ' + cardinal(v.cwd + 180) + '.';
+    if (v.cwd != null && v.cr != null) {
+      var perp = v.cws * Math.abs(Math.sin((v.cwd - v.cr) * Math.PI / 180));
+      var txt = 'Composante perpendiculaire à la crête : ' + fmt(perp) + ' kt.' + lee;
+      if (perp >= 20) verdict('k4', 'Rabattants probables', true, wv, txt);
+      else if (perp >= 10) verdict('k4', 'Turbulence possible', true, wv, txt);
+      else verdict('k4', 'Faible', false, wv, txt);
+    } else {
+      var hint = v.cwd == null ? ' Saisis la direction pour situer le côté sous le vent.' : " Saisis l'axe de la crête pour la composante perpendiculaire." + lee;
+      if (v.cws >= 20) verdict('k4', 'Fort', true, wv, 'Vent fort au passage.' + hint);
+      else if (v.cws >= 10) verdict('k4', 'Modéré', true, wv, 'Vent modéré au passage.' + hint);
+      else verdict('k4', 'Faible', false, wv, 'Vent faible au passage.' + hint);
+    }
+  }
+}
+
+function cEdited(e) {
+  if (e && e.target.id === 'cq') { $('q').value = $('cq').value; render(); renderReverse(); }
+  var g = {};
+  CGEO.forEach(function (id) { g[id] = $(id).value; });
+  store('hpa.col', JSON.stringify(g));
+  saveSession();
+  renderCol();
+}
+Object.keys(CLIMITS).forEach(function (id) { $(id).addEventListener('input', cEdited); });
+['cform1', 'cform2'].forEach(function (id) { $(id).addEventListener('submit', function (e) { e.preventDefault(); }); });
+$('cclear').addEventListener('click', function () {
+  ['ct', 'cd', 'cwd', 'cws', 'c0'].forEach(function (i) { $(i).value = ''; });
+  cEdited();
+  $('ct').focus();
+});
+(function restoreCol() {
+  var g = null;
+  try { g = JSON.parse(load('hpa.col')); } catch (e) {}
+  g = g || {};
+  CGEO.forEach(function (id) { $(id).value = g[id] || ''; });
+})();
+renderCol();
+
 function showTab(name) {
-  ['calc', 'sondage'].forEach(function (t) {
+  ['calc', 'sondage', 'col'].forEach(function (t) {
     $('tab-' + t).hidden = t !== name;
     $('btn-' + t).setAttribute('aria-selected', t === name ? 'true' : 'false');
   });
@@ -576,7 +752,7 @@ function showTab(name) {
 [].forEach.call(document.querySelectorAll('.tab'), function (b) {
   b.addEventListener('click', function () { showTab(b.dataset.tab); });
 });
-showTab(load('hpa.tab') === 'sondage' ? 'sondage' : 'calc');
+showTab(['sondage', 'col'].indexOf(load('hpa.tab')) >= 0 ? load('hpa.tab') : 'calc');
 
 /* Offline and updates: the service worker keeps a copy; a new deployment shows the green banner. */
 (function network() {
