@@ -83,11 +83,29 @@ td.below { color: var(--muted); font-family: var(--sans); font-size: .8125rem; }
 .formula code { display: block; font: .875rem/1.5 var(--num); white-space: pre-wrap; overflow-wrap: anywhere; padding: 8px 10px; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; }
 .formula p { margin: 0; font-size: .875rem; max-width: 65ch; }
 
-.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); }
+.tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--line); overflow-x: auto; }
+.tab { flex: none; }
 .tab { background: transparent; border: 0; border-bottom: 3px solid transparent; margin-bottom: -1px; color: var(--muted); font: 600 1rem var(--sans); padding: 8px 12px; cursor: pointer; }
 .tab[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); }
 .tab:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 #tab-calc { display: contents; }
+#tab-windy { display: grid; gap: 10px; min-width: 0; }
+#tab-windy > p { margin: 0; font-size: .9375rem; max-width: 70ch; }
+details.guide { border: 1px solid var(--line); border-radius: 6px; background: var(--surface); }
+details.guide > summary { cursor: pointer; list-style: none; padding: 12px 14px; font-weight: 700; display: flex; justify-content: space-between; gap: 12px; align-items: baseline; }
+details.guide > summary::-webkit-details-marker { display: none; }
+details.guide > summary::after { content: "+"; font: 700 1.1rem var(--num); color: var(--accent-text); }
+details.guide[open] > summary::after { content: "−"; }
+details.guide > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+details.guide > summary small { font-weight: 400; color: var(--muted); font-size: .8125rem; margin-left: auto; }
+.gbody { padding: 0 14px 14px; display: grid; gap: 10px; }
+.gbody p, .gbody ol, .gbody ul { margin: 0; font-size: .9375rem; max-width: 70ch; }
+.gbody ol, .gbody ul { padding-left: 1.2em; display: grid; gap: 6px; }
+.gbody .terms > div { padding: 8px 0; }
+.gbody .tablebox table { font-size: .875rem; }
+.gbody .tablebox td, .gbody .tablebox th { white-space: normal; text-align: left; font-family: var(--sans); padding: 6px 8px; vertical-align: top; }
+.gbody .tablebox td:first-child { font-weight: 700; white-space: nowrap; }
+.warn { border-left: 3px solid var(--accent); padding-left: 10px; }
 #tab-col { display: grid; gap: 20px; grid-template-columns: minmax(0, 1fr); min-width: 0; }
 @media (min-width: 820px) { #tab-col { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; } #tab-col > .wide { grid-column: 1 / -1; } }
 #tab-col .verdicts { border-top: 1px solid var(--line); padding-top: 12px; }
@@ -126,6 +144,7 @@ td.below { color: var(--muted); font-family: var(--sans); font-size: .8125rem; }
     <button class="tab" type="button" role="tab" id="btn-calc" aria-controls="tab-calc" data-tab="calc">Calcul</button>
     <button class="tab" type="button" role="tab" id="btn-sondage" aria-controls="tab-sondage" data-tab="sondage">Sondage</button>
     <button class="tab" type="button" role="tab" id="btn-col" aria-controls="tab-col" data-tab="col">Col</button>
+    <button class="tab" type="button" role="tab" id="btn-windy" aria-controls="tab-windy" data-tab="windy">Windy</button>
   </nav>
 
   <div id="tab-calc" role="tabpanel" aria-labelledby="btn-calc">
@@ -360,10 +379,144 @@ td.below { color: var(--muted); font-family: var(--sans); font-size: .8125rem; }
     </section>
   </div>
 
+  <div id="tab-windy" class="full" role="tabpanel" aria-labelledby="btn-windy" hidden>
+    <p>Fiche de lecture de Windy pour préparer un vol VFR. Touche une rubrique pour l'ouvrir.</p>
+
+    <details class="guide">
+      <summary>Réglages à vérifier <small>une fois</small></summary>
+      <div class="gbody">
+        <ul>
+          <li><strong>Unités :</strong> altitude en pieds, vent en nœuds. La visibilité peut s'afficher en miles terrestres (sm) : 1 sm ≈ 1,6 km, donc 5 sm ≈ 8 km.</li>
+          <li><strong>Heure :</strong> Windy affiche l'heure locale. Les TAF et METAR sont en UTC : ajoute 1 h en hiver, 2 h en été.</li>
+          <li><strong>Source :</strong> c'est le modèle utilisé. Note-le à chaque consultation, car les valeurs changent d'un modèle à l'autre.</li>
+          <li><strong>Vitesse (vue VFR et Airgram) :</strong> mets ta vitesse de croisière. Windy cale l'heure de chaque point de la route sur cette vitesse.</li>
+        </ul>
+      </div>
+    </details>
+
+    <details class="guide">
+      <summary>Couches de la carte <small>vue d'ensemble</small></summary>
+      <div class="gbody">
+        <div class="tablebox">
+          <table>
+            <thead><tr><th scope="col">Couche</th><th scope="col">Ce qu'elle montre</th><th scope="col">À surveiller</th></tr></thead>
+            <tbody>
+              <tr><td>Vent / rafales</td><td>Direction et force à l'altitude choisie, du sol au FL</td><td>L'écart entre vent moyen et rafales, et le vent en altitude au niveau de ta croisière</td></tr>
+              <tr><td>Nuages</td><td>Couverture basse, moyenne et haute</td><td>La couche basse : c'est elle qui gêne le VFR</td></tr>
+              <tr><td>Base des nuages</td><td>Hauteur de la base calculée par le modèle</td><td>Une valeur de modèle, souvent moins fiable par temps de stratus ou de brouillard</td></tr>
+              <tr><td>Visibilité</td><td>Visibilité prévue en surface</td><td>Brume et brouillard au lever du jour, en vallée, après la pluie</td></tr>
+              <tr><td>Pluie</td><td>Quantité par heure ou cumul</td><td>Une pluie faible suffit à baisser plafond et visibilité</td></tr>
+              <tr><td>Isotherme 0 °C</td><td>Altitude du gel</td><td>Compare-la à ton altitude de croisière et aux sommets</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Fais défiler la frise du bas heure par heure : l'évolution compte autant que la valeur à l'heure du vol.</p>
+      </div>
+    </details>
+
+    <details class="guide">
+      <summary>Vue VFR sur une route <small>la plus utile</small></summary>
+      <div class="gbody">
+        <p>Trace ta route sur la carte, puis choisis « VFR ». Tu obtiens une coupe verticale le long du trajet.</p>
+        <dl class="terms">
+          <div><dt>Axe vertical</dt><dd>Altitude en pieds et en mètres, jusqu'au FL100.</dd></div>
+          <div><dt>Zone beige</dt><dd>Le relief sous ta route. Le curseur indique son altitude au point choisi.</dd></div>
+          <div><dt>Zones grises</dt><dd>Les nuages : plus le gris est foncé, plus ils sont denses. Un gris qui touche le relief signale des sommets dans les nuages.</dd></div>
+          <div><dt>Ligne bleue</dt><dd>Isotherme 0 °C. Au-dessus, en nuage, risque de givrage.</dd></div>
+          <div><dt>Barbules</dt><dd>Vent à chaque altitude, tout le long de la route.</dd></div>
+          <div><dt>Chiffres bleus ou violets</dt><dd>Pluie prévue en mm. Le violet signale de la pluie convective (averses).</dd></div>
+        </dl>
+        <h2 class="sub">Le tableau sous la coupe</h2>
+        <dl class="terms">
+          <div><dt>Alertes météo</dt><dd>Vigilances en cours sur la zone.</dd></div>
+          <div><dt>Sommets des nuages</dt><dd>Épaisseur de la couche : utile pour savoir si on peut passer au-dessus, ce qui reste à éviter sans qualification.</dd></div>
+          <div><dt>Base des nuages</dt><dd>« -- » peut signifier pas de base calculée. Touche le libellé pour vérifier s'il s'agit d'une hauteur sol ou d'une altitude.</dd></div>
+          <div><dt>Visibilité en surface</dt><dd>Vérifie l'unité (sm ou km).</dd></div>
+          <div><dt>Écart au point de rosée</dt><dd>Température moins point de rosée. Sous 2 à 3 °C, l'air est presque saturé : brume, nuages bas et givrage carburateur probables.</dd></div>
+        </dl>
+      </div>
+    </details>
+
+    <details class="guide">
+      <summary>Airgram <small>coupe en hPa</small></summary>
+      <div class="gbody">
+        <p>Même principe que la vue VFR, mais l'axe vertical est en hPa (utilise l'onglet Calcul pour convertir).</p>
+        <ul>
+          <li><strong>Couleur de fond :</strong> température, avec l'échelle au centre.</li>
+          <li><strong>Ligne blanche :</strong> isotherme 0 °C.</li>
+          <li><strong>Barbules :</strong> vent par niveau à chaque point de la route.</li>
+        </ul>
+        <p>Utile pour suivre le vent et la température en altitude sur tout le trajet.</p>
+      </div>
+    </details>
+
+    <details class="guide">
+      <summary>Sondage (skew-T) <small>détail en un point</small></summary>
+      <div class="gbody">
+        <ul>
+          <li><strong>Courbe rouge :</strong> température. Pour la lire, suis les traits violets obliques jusqu'à l'échelle du bas, pas la verticale.</li>
+          <li><strong>Courbe bleue :</strong> point de rosée. Plus elle touche la rouge, plus l'air est saturé.</li>
+          <li><strong>Violet épais :</strong> 0 °C. Son croisement avec la rouge donne le niveau du gel.</li>
+          <li><strong>Barbules à droite :</strong> vent par niveau.</li>
+          <li><strong>Tcon, LCL, CCL :</strong> voir l'onglet Sondage.</li>
+        </ul>
+        <p>Place le point sur la zone qui t'intéresse (col, crête), pas sur ton terrain de départ.</p>
+      </div>
+    </details>
+
+    <details class="guide">
+      <summary>Lire une barbule</summary>
+      <div class="gbody">
+        <ul>
+          <li><strong>Hampe :</strong> elle pointe vers la direction d'où vient le vent.</li>
+          <li><strong>Demi-trait :</strong> 5 kt. <strong>Trait :</strong> 10 kt. <strong>Triangle :</strong> 50 kt. Additionne-les.</li>
+          <li><strong>Cercle :</strong> vent calme.</li>
+        </ul>
+      </div>
+    </details>
+
+    <details class="guide">
+      <summary>Choisir et comparer les modèles</summary>
+      <div class="gbody">
+        <ul>
+          <li><strong>Modèles fins (AROME, ICON-D2) :</strong> mailles de quelques kilomètres, meilleurs pour le relief et les phénomènes locaux, mais échéance courte (environ 2 jours).</li>
+          <li><strong>Modèles globaux (ECMWF, GFS) :</strong> plus grossiers, utiles pour la tendance à plusieurs jours.</li>
+          <li><strong>Comparer :</strong> quand les modèles sont d'accord, la prévision est plus fiable. Quand ils divergent, garde de la marge.</li>
+        </ul>
+      </div>
+    </details>
+
+    <details class="guide">
+      <summary>Méthode de préparation</summary>
+      <div class="gbody">
+        <ol>
+          <li><strong>2 à 3 jours avant :</strong> tendance avec un modèle global (ECMWF).</li>
+          <li><strong>La veille :</strong> vue VFR sur la route avec un modèle fin, puis comparaison avec un second modèle.</li>
+          <li><strong>Le jour même :</strong> TAF, METAR et prévisions aéronautiques officielles (Aeroweb). Ils priment sur Windy.</li>
+          <li><strong>Après le vol :</strong> compare ce que Windy annonçait avec ce que tu as vu. C'est ainsi que tu sauras quelle confiance lui accorder dans les Vosges.</li>
+        </ol>
+      </div>
+    </details>
+
+    <details class="guide">
+      <summary>Pièges fréquents</summary>
+      <div class="gbody">
+        <ul class="warn">
+          <li>Windy affiche une prévision de modèle, pas une observation.</li>
+          <li>Brouillard et stratus bas sont souvent mal prévus par les modèles.</li>
+          <li>Heure locale dans Windy, UTC dans les TAF et METAR.</li>
+          <li>Visibilité en sm prise pour des km.</li>
+          <li>Sondage pris sur le terrain de départ au lieu du relief à franchir.</li>
+          <li>Une seule source consultée : compare toujours au moins deux modèles.</li>
+        </ul>
+      </div>
+    </details>
+  </div>
+
 </div>
 
 <script>
-var APP_VERSION = '1.2';
+var APP_VERSION = '1.3';
 
 var K = 145366.45, N = 0.190284, P0 = 1013.25, RG = 96.03;
 var LEVELS = [1000, 950, 925, 900, 850, 800, 700, 600, 500, 400, 300, 250, 200];
@@ -743,7 +896,7 @@ $('cclear').addEventListener('click', function () {
 renderCol();
 
 function showTab(name) {
-  ['calc', 'sondage', 'col'].forEach(function (t) {
+  ['calc', 'sondage', 'col', 'windy'].forEach(function (t) {
     $('tab-' + t).hidden = t !== name;
     $('btn-' + t).setAttribute('aria-selected', t === name ? 'true' : 'false');
   });
@@ -752,7 +905,7 @@ function showTab(name) {
 [].forEach.call(document.querySelectorAll('.tab'), function (b) {
   b.addEventListener('click', function () { showTab(b.dataset.tab); });
 });
-showTab(['sondage', 'col'].indexOf(load('hpa.tab')) >= 0 ? load('hpa.tab') : 'calc');
+showTab(['sondage', 'col', 'windy'].indexOf(load('hpa.tab')) >= 0 ? load('hpa.tab') : 'calc');
 
 /* Offline and updates: the service worker keeps a copy; a new deployment shows the green banner. */
 (function network() {
